@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>RandomSamplingStrategy.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">services::movie-services</a> &gt; <a href="index.source.html" class="el_package">com.nc.services.internal</a> &gt; <span class="el_source">RandomSamplingStrategy.java</span></div><h1>RandomSamplingStrategy.java</h1><pre class="source lang-java linenums">package com.nc.services.internal;
+
+import java.util.NavigableSet;
+import java.util.Set;
+import java.util.TreeSet;
+import java.util.concurrent.ThreadLocalRandom;
+import java.util.stream.Collectors;
+
+import javax.transaction.Transactional;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
+import org.springframework.stereotype.Component;
+
+import com.nc.domain.internal.Errors;
+import com.nc.domain.internal.Movie;
+import com.nc.domain.internal.MovieSamplingStrategy;
+import com.nc.domain.internal.Pair;
+import com.nc.repositories.jpa.internal.MovieRepository;
+
+@Transactional
+@Component
+<span class="fc" id="L24">public class RandomSamplingStrategy implements MovieSamplingStrategy {</span>
+
+	@Autowired
+	MovieRepository movies;
+
+	TreeSet&lt;Integer&gt; asFilter(Set&lt;Pair&gt; seen) {
+<span class="pc bpc" id="L30" title="1 of 4 branches missed.">		if (seen == null || seen.isEmpty()) {</span>
+<span class="fc" id="L31">			return null;</span>
+		}
+
+<span class="fc" id="L34">		return seen.stream().flatMap(s -&gt; s.values().boxed()).collect(Collectors.toCollection(TreeSet::new));</span>
+	}
+
+	PageRequest first() {
+<span class="fc" id="L38">		return PageRequest.of(0, 1, Sort.by(&quot;id&quot;).ascending());</span>
+	}
+
+	@Override
+	public Pair pickNext(Set&lt;Pair&gt; seen, int minRounds) {
+<span class="fc" id="L43">		var count = movies.count();</span>
+
+<span class="pc bpc" id="L45" title="1 of 2 branches missed.">		if (count &lt;= minRounds) {</span>
+<span class="nc" id="L46">			throw Errors.get().notEnoughMovies(count, minRounds);</span>
+		}
+
+<span class="fc" id="L49">		var filter = asFilter(seen);</span>
+<span class="fc" id="L50">		var pair = randomPair(count, filter);</span>
+
+<span class="fc" id="L52">		return pair;</span>
+	}
+
+	Movie pickRandom(long count, NavigableSet&lt;Integer&gt; not) {
+<span class="fc" id="L56">		var req = random(count, 1);</span>
+
+<span class="fc bfc" id="L58" title="All 2 branches covered.">		if (not == null) {</span>
+<span class="fc" id="L59">			var page = movies.findAll(req);</span>
+<span class="fc" id="L60">			return page.stream().findFirst().orElse(null);</span>
+		} else {
+<span class="fc" id="L62">			var filtered = movies.findByIdNotIn(req, not);</span>
+
+			// edge case page + filter overflow
+<span class="fc bfc" id="L65" title="All 2 branches covered.">			if (filtered.isEmpty()) {</span>
+<span class="fc" id="L66">				filtered = movies.findByIdNotIn(first(), not);</span>
+
+<span class="pc bpc" id="L68" title="1 of 2 branches missed.">				if (filtered.isEmpty()) {</span>
+<span class="nc" id="L69">					filtered = movies.findByIdLessThan(first(), not.first());</span>
+				}
+
+<span class="pc bpc" id="L72" title="1 of 2 branches missed.">				if (filtered.isEmpty()) {</span>
+<span class="nc" id="L73">					filtered = movies.findByIdGreaterThan(first(), not.last());</span>
+				}
+
+<span class="pc bpc" id="L76" title="1 of 2 branches missed.">				if (filtered.isEmpty()) {</span>
+<span class="nc" id="L77">					throw Errors.get().unableToGenerateSample();</span>
+				}
+			}
+
+<span class="fc" id="L81">			return filtered.get(0);</span>
+		}
+	}
+
+	private PageRequest random(long count, int pagesize) {
+<span class="fc" id="L86">		var random = ThreadLocalRandom.current();</span>
+
+<span class="pc bpc" id="L88" title="1 of 2 branches missed.">		var pages = count / pagesize + ((count % pagesize == 0) ? 0 : 1);</span>
+
+<span class="fc" id="L90">		var page = (int) random.nextLong(0, pages);</span>
+
+<span class="fc" id="L92">		return PageRequest.of(page, pagesize, Sort.by(&quot;id&quot;).ascending());</span>
+	}
+
+	Pair randomPair(long count, NavigableSet&lt;Integer&gt; seen) {
+<span class="fc" id="L96">		var first = pickRandom(count, seen);</span>
+
+<span class="fc bfc" id="L98" title="All 2 branches covered.">		if (seen == null) {</span>
+<span class="fc" id="L99">			seen = new TreeSet&lt;&gt;();</span>
+		}
+<span class="fc" id="L101">		seen.add(first.getId());</span>
+
+<span class="fc" id="L103">		var second = pickRandom(count, seen);</span>
+
+<span class="fc" id="L105">		return new Pair(first, second);</span>
+	}
+
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

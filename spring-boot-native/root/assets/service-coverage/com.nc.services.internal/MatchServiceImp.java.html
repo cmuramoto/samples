@@ -1,0 +1,187 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="en"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>MatchServiceImp.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">services::movie-services</a> &gt; <a href="index.source.html" class="el_package">com.nc.services.internal</a> &gt; <span class="el_source">MatchServiceImp.java</span></div><h1>MatchServiceImp.java</h1><pre class="source lang-java linenums">package com.nc.services.internal;
+
+import java.util.List;
+
+import javax.transaction.Transactional;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Component;
+
+import com.nc.domain.internal.AppUser;
+import com.nc.domain.internal.ConstraintService;
+import com.nc.domain.internal.Errors;
+import com.nc.domain.internal.Match;
+import com.nc.domain.internal.MatchService;
+import com.nc.domain.internal.MovieSamplingStrategy;
+import com.nc.domain.internal.QuizzRanking;
+import com.nc.domain.internal.RoundService;
+import com.nc.repositories.jpa.internal.AppUserRepository;
+import com.nc.repositories.jpa.internal.MatchRepository;
+import com.nc.repositories.jpa.internal.QuizzRankingRepository;
+
+@Transactional
+@Component
+<span class="fc" id="L24">public class MatchServiceImp implements MatchService {</span>
+
+	static Match mustBeActive(AppUser user, Match active) {
+<span class="pc bpc" id="L27" title="1 of 2 branches missed.">		if (active == null) {</span>
+<span class="nc" id="L28">			throw Errors.get().userHasNotStartedMatch(user);</span>
+		}
+
+<span class="pc bpc" id="L31" title="1 of 2 branches missed.">		if (active.isFinished()) {</span>
+<span class="nc" id="L32">			throw Errors.get().userHasAlreadyFinishedMatch(user, active);</span>
+		}
+
+<span class="fc" id="L35">		return active;</span>
+	}
+
+	@Autowired
+	AppUserRepository users;
+
+	@Autowired
+	MatchRepository matches;
+
+	@Autowired
+	QuizzRankingRepository quizzes;
+
+	@Autowired
+	MovieSamplingStrategy strategy;
+
+	@Autowired
+	RoundService rounds;
+
+	@Autowired
+	ConstraintService constraints;
+
+	@Override
+	public Match activeFor(AppUser user) {
+<span class="fc" id="L58">		return matches.activeFor(user, true);</span>
+	}
+
+	@Override
+	public int countPlayedBy(AppUser user) {
+<span class="fc" id="L63">		return (int) matches.countByUserAndFinishedIsNotNull(user);</span>
+	}
+
+	private Match doFinish(Match active, AppUser user) {
+<span class="fc" id="L67">		active.finish();</span>
+<span class="fc" id="L68">		active = matches.save(active);</span>
+<span class="fc" id="L69">		updateStatistics(active, user);</span>
+<span class="fc" id="L70">		return active;</span>
+	}
+
+	@Override
+	public Match finishCurrent(AppUser user) {
+<span class="nc" id="L75">		var active = matches.activeFor(user, true);</span>
+
+<span class="nc bnc" id="L77" title="All 2 branches missed.">		if (active != null) {</span>
+<span class="nc" id="L78">			return doFinish(active, user);</span>
+		}
+
+<span class="nc" id="L81">		throw Errors.get().userHasNotStartedMatch(user);</span>
+	}
+
+	@Override
+	public Match finishRound(AppUser user, int selected) {
+<span class="fc" id="L86">		var active = mustBeActive(user, matches.activeFor(user, false));</span>
+
+<span class="fc" id="L88">		active.finishTail(selected);</span>
+
+<span class="fc" id="L90">		var count = active.errorCount();</span>
+
+<span class="pc bpc" id="L92" title="1 of 4 branches missed.">		if (count &gt;= constraints.maxErrors() || active.isFinished()) {</span>
+<span class="fc" id="L93">			return doFinish(active, user);</span>
+		}
+
+<span class="pc bpc" id="L96" title="1 of 2 branches missed.">		if (active.isFinished()) {</span>
+<span class="nc" id="L97">			updateStatistics(active, user);</span>
+		}
+
+<span class="fc" id="L100">		return matches.save(active);</span>
+	}
+
+	@Override
+	public Match getOrStartFor(AppUser user) {
+<span class="nc" id="L105">		var match = activeFor(user);</span>
+
+<span class="nc bnc" id="L107" title="All 2 branches missed.">		if (match == null) {</span>
+<span class="nc" id="L108">			match = startFor(user);</span>
+		}
+
+<span class="nc" id="L111">		return match;</span>
+	}
+
+	@Override
+	public Match newRound(AppUser user) {
+<span class="fc" id="L116">		var active = matches.activeFor(user, false);</span>
+
+<span class="fc bfc" id="L118" title="All 2 branches covered.">		if (active == null) {</span>
+<span class="fc" id="L119">			throw Errors.get().userHasNotStartedMatch(user);</span>
+		}
+
+<span class="fc" id="L122">		var next = strategy.pickNext(active.seen(), constraints.maxRounds());</span>
+
+<span class="fc" id="L124">		active.newRound(next, true);</span>
+
+<span class="fc" id="L126">		active = matches.save(active);</span>
+
+<span class="fc" id="L128">		return active;</span>
+	}
+
+	@Override
+	public QuizzRanking rankingFor(AppUser user) {
+<span class="nc" id="L133">		return quizzes.findOneByUser(user).orElse(null);</span>
+	}
+
+	@Override
+	public Match startFor(AppUser user) {
+<span class="fc" id="L138">		var active = matches.activeFor(user, false);</span>
+
+<span class="fc bfc" id="L140" title="All 2 branches covered.">		if (active != null) {</span>
+<span class="fc" id="L141">			throw Errors.get().userNotFinishedMatch(user, active);</span>
+		}
+
+<span class="fc" id="L144">		active = Match.startFor(user, constraints.maxRounds());</span>
+
+<span class="fc" id="L146">		var next = strategy.pickNext(active.seen(), constraints.maxRounds());</span>
+<span class="fc" id="L147">		active.newRound(next, true);</span>
+
+<span class="fc" id="L149">		active = matches.save(active);</span>
+
+<span class="fc" id="L151">		return active;</span>
+	}
+
+	@Override
+	public List&lt;QuizzRanking&gt; top(int max, int page) {
+<span class="nc" id="L156">		return quizzes.top(max, page);</span>
+	}
+
+	private void updateStatistics(Match active, AppUser user) {
+<span class="fc" id="L160">		var quizz = quizzes.findOneByUser(user).orElseGet(() -&gt; {</span>
+<span class="fc" id="L161">			var q = new QuizzRanking();</span>
+<span class="fc" id="L162">			q.setUser(user);</span>
+
+<span class="fc" id="L164">			return q;</span>
+		});
+
+<span class="fc" id="L167">		var played = this.countPlayedBy(user);</span>
+<span class="fc" id="L168">		var answers = rounds.countAnsweredBy(user, false);</span>
+<span class="fc" id="L169">		var correct = rounds.countAnsweredBy(user, true);</span>
+
+		double pct;
+
+<span class="pc bpc" id="L173" title="1 of 2 branches missed.">		if (answers &gt; 0) {</span>
+<span class="fc" id="L174">			pct = ((double) correct) / answers;</span>
+		} else {
+<span class="nc" id="L176">			pct = 0;</span>
+		}
+
+<span class="fc" id="L179">		quizz.setAnswers(answers);</span>
+<span class="fc" id="L180">		quizz.setPlayed(played);</span>
+<span class="fc" id="L181">		quizz.setCorrect(correct);</span>
+<span class="fc" id="L182">		quizz.setScore(played * pct);</span>
+
+<span class="fc" id="L184">		quizzes.save(quizz);</span>
+<span class="fc" id="L185">	}</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.7.202105040129</span></div></body></html>

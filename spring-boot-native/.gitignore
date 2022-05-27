@@ -1,0 +1,8 @@
+.classpath
+.project
+.settings
+target
+.factorypath
+.attach*
+native-image-agent
+*build_artifacts.txt

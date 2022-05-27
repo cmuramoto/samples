@@ -1,0 +1,8 @@
+GROUP,PACKAGE,CLASS,INSTRUCTION_MISSED,INSTRUCTION_COVERED,BRANCH_MISSED,BRANCH_COVERED,LINE_MISSED,LINE_COVERED,COMPLEXITY_MISSED,COMPLEXITY_COVERED,METHOD_MISSED,METHOD_COVERED
+services::movie-services,com.nc.services.internal,MatchServiceImp,58,211,9,11,14,47,11,13,4,10
+services::movie-services,com.nc.services.internal,AppUserServiceImp,3,46,3,9,1,12,3,7,0,4
+services::movie-services,com.nc.services.internal,RandomSamplingStrategy,27,167,6,14,4,31,6,12,0,8
+services::movie-services,com.nc.services.internal,RoundServiceImp,0,21,0,2,0,5,0,3,0,2
+services::movie-services,com.nc.services.internal,ConstraintServiceImp,10,9,0,0,6,3,2,3,2,3
+services::movie-services,com.nc.services.internal,MovieServiceImp,14,7,0,0,1,2,2,2,2,2
+services::movie-services,com.nc.services.frontend,MovieGameServiceImp,393,3,22,0,93,1,27,1,16,1

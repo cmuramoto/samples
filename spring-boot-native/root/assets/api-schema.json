@@ -1,0 +1,580 @@
+{
+   "components" : {
+      "schemas" : {
+         "ApiConstraints" : {
+            "properties" : {
+               "maxErrors" : {
+                  "format" : "int32",
+                  "type" : "integer"
+               },
+               "maxRounds" : {
+                  "format" : "int32",
+                  "type" : "integer"
+               }
+            },
+            "type" : "object"
+         },
+         "ApiMatchResult" : {
+            "properties" : {
+               "errors" : {
+                  "format" : "int32",
+                  "type" : "integer"
+               },
+               "finished" : {
+                  "format" : "date-time",
+                  "type" : "string"
+               },
+               "hits" : {
+                  "format" : "int32",
+                  "type" : "integer"
+               },
+               "ranking" : {
+                  "$ref" : "#/components/schemas/ApiUserRanking"
+               },
+               "started" : {
+                  "format" : "date-time",
+                  "type" : "string"
+               }
+            },
+            "required" : [
+               "finished",
+               "started"
+            ],
+            "type" : "object"
+         },
+         "ApiMovie" : {
+            "properties" : {
+               "id" : {
+                  "format" : "int32",
+                  "type" : "integer"
+               },
+               "poster" : {
+                  "type" : "string"
+               },
+               "title" : {
+                  "type" : "string"
+               }
+            },
+            "required" : [
+               "title"
+            ],
+            "type" : "object"
+         },
+         "ApiRound" : {
+            "properties" : {
+               "first" : {
+                  "$ref" : "#/components/schemas/ApiMovie"
+               },
+               "number" : {
+                  "format" : "int32",
+                  "type" : "integer"
+               },
+               "second" : {
+                  "$ref" : "#/components/schemas/ApiMovie"
+               },
+               "selected" : {
+                  "format" : "int32",
+                  "type" : "integer"
+               }
+            },
+            "type" : "object"
+         },
+         "ApiUser" : {
+            "properties" : {
+               "name" : {
+                  "type" : "string"
+               },
+               "ranking" : {
+                  "$ref" : "#/components/schemas/ApiUserRanking"
+               }
+            },
+            "type" : "object"
+         },
+         "ApiUserRanking" : {
+            "properties" : {
+               "hits" : {
+                  "format" : "int32",
+                  "type" : "integer"
+               },
+               "played" : {
+                  "format" : "int32",
+                  "type" : "integer"
+               },
+               "score" : {
+                  "format" : "double",
+                  "type" : "number"
+               },
+               "user" : {
+                  "type" : "string"
+               }
+            },
+            "required" : [
+               "user"
+            ],
+            "type" : "object"
+         },
+         "FinishMatchRequest" : {
+            "properties" : {
+               "startNew" : {
+                  "type" : "boolean"
+               }
+            },
+            "type" : "object"
+         },
+         "FinishMatchResponse" : {
+            "properties" : {
+               "next" : {
+                  "$ref" : "#/components/schemas/ApiRound"
+               },
+               "result" : {
+                  "$ref" : "#/components/schemas/ApiMatchResult"
+               }
+            },
+            "type" : "object"
+         },
+         "FinishRoundRequest" : {
+            "properties" : {
+               "selected" : {
+                  "format" : "int32",
+                  "type" : "integer"
+               }
+            },
+            "type" : "object"
+         },
+         "FinishRoundResponse" : {
+            "properties" : {
+               "next" : {
+                  "$ref" : "#/components/schemas/ApiRound"
+               },
+               "result" : {
+                  "$ref" : "#/components/schemas/ApiMatchResult"
+               }
+            },
+            "type" : "object"
+         },
+         "FrontEndTranslatedError" : {
+            "properties" : {
+               "message" : {
+                  "maxLength" : 1024,
+                  "minLength" : 0,
+                  "type" : "string"
+               }
+            },
+            "required" : [
+               "message"
+            ],
+            "type" : "object"
+         },
+         "GetOrStartGameRequest" : {
+            "properties" : {
+               "category" : {
+                  "type" : "string"
+               }
+            },
+            "type" : "object"
+         },
+         "GetOrStartGameResponse" : {
+            "properties" : {
+               "current" : {
+                  "$ref" : "#/components/schemas/ApiRound"
+               },
+               "started" : {
+                  "format" : "date-time",
+                  "type" : "string"
+               }
+            },
+            "required" : [
+               "current",
+               "started"
+            ],
+            "type" : "object"
+         },
+         "JwtRequest" : {
+            "properties" : {
+               "password" : {
+                  "type" : "string"
+               },
+               "username" : {
+                  "type" : "string"
+               }
+            },
+            "required" : [
+               "password",
+               "username"
+            ],
+            "type" : "object"
+         },
+         "TopPlayerRequest" : {
+            "properties" : {
+               "max" : {
+                  "format" : "int32",
+                  "type" : "integer"
+               },
+               "page" : {
+                  "format" : "int32",
+                  "type" : "integer"
+               }
+            },
+            "type" : "object"
+         },
+         "TopPlayerResponse" : {
+            "properties" : {
+               "checkedAt" : {
+                  "format" : "date-time",
+                  "type" : "string"
+               },
+               "rankings" : {
+                  "items" : {
+                     "$ref" : "#/components/schemas/ApiUserRanking"
+                  },
+                  "type" : "array"
+               }
+            },
+            "required" : [
+               "checkedAt",
+               "rankings"
+            ],
+            "type" : "object"
+         }
+      }
+   },
+   "info" : {
+      "title" : "OpenAPI definition",
+      "version" : "v0"
+   },
+   "openapi" : "3.0.1",
+   "paths" : {
+      "/v1/authenticate" : {
+         "post" : {
+            "operationId" : "createAuthenticationToken",
+            "requestBody" : {
+               "content" : {
+                  "application/json" : {
+                     "schema" : {
+                        "$ref" : "#/components/schemas/JwtRequest"
+                     }
+                  }
+               },
+               "required" : true
+            },
+            "responses" : {
+               "200" : {
+                  "content" : {
+                     "*/*" : {
+                        "schema" : {
+                           "type" : "object"
+                        }
+                     }
+                  },
+                  "description" : "OK"
+               }
+            },
+            "tags" : [
+               "jwt-authentication-controller"
+            ]
+         }
+      },
+      "/v1/game/constraints" : {
+         "get" : {
+            "operationId" : "getConstraints",
+            "responses" : {
+               "200" : {
+                  "content" : {
+                     "*/*" : {
+                        "schema" : {
+                           "$ref" : "#/components/schemas/ApiConstraints"
+                        }
+                     }
+                  },
+                  "description" : "Value updated successfully"
+               },
+               "417" : {
+                  "content" : {
+                     "*/*" : {
+                        "schema" : {
+                           "$ref" : "#/components/schemas/FrontEndTranslatedError"
+                        }
+                     }
+                  },
+                  "description" : "maxRounds < 1 || maxErrors < 1"
+               }
+            },
+            "summary" : "Fetches the game constraints (maxRounds,maxErrors)",
+            "tags" : [
+               "game-controller"
+            ]
+         },
+         "post" : {
+            "operationId" : "changeConstraints",
+            "requestBody" : {
+               "content" : {
+                  "application/json" : {
+                     "schema" : {
+                        "$ref" : "#/components/schemas/ApiConstraints"
+                     }
+                  }
+               },
+               "required" : true
+            },
+            "responses" : {
+               "200" : {
+                  "content" : {
+                     "*/*" : {
+                        "schema" : {
+                           "$ref" : "#/components/schemas/ApiConstraints"
+                        }
+                     }
+                  },
+                  "description" : "Value updated successfully"
+               },
+               "417" : {
+                  "content" : {
+                     "*/*" : {
+                        "schema" : {
+                           "$ref" : "#/components/schemas/FrontEndTranslatedError"
+                        }
+                     }
+                  },
+                  "description" : "maxRounds < 1 || maxErrors < 1"
+               }
+            },
+            "summary" : "Changes the game's constraints (maxRounds,maxErrors)",
+            "tags" : [
+               "game-controller"
+            ]
+         }
+      },
+      "/v1/game/finish" : {
+         "post" : {
+            "operationId" : "finishMatch",
+            "requestBody" : {
+               "content" : {
+                  "application/json" : {
+                     "schema" : {
+                        "$ref" : "#/components/schemas/FinishMatchRequest"
+                     }
+                  }
+               },
+               "required" : true
+            },
+            "responses" : {
+               "200" : {
+                  "content" : {
+                     "*/*" : {
+                        "schema" : {
+                           "$ref" : "#/components/schemas/FinishMatchResponse"
+                        }
+                     }
+                  },
+                  "description" : "Finishes current round with user selection. Returns either new round if rounds played < 10 or the match summary if request was for the last round"
+               },
+               "417" : {
+                  "content" : {
+                     "*/*" : {
+                        "schema" : {
+                           "$ref" : "#/components/schemas/FrontEndTranslatedError"
+                        }
+                     }
+                  },
+                  "description" : "If category is not supported or there are not enough movies in the database to satisfy a match of 10 rounds"
+               }
+            },
+            "summary" : "Retrieves the current match in play or create a new one if user has no active match associated",
+            "tags" : [
+               "game-controller"
+            ]
+         }
+      },
+      "/v1/game/me" : {
+         "get" : {
+            "operationId" : "findAuthenticatedUserInfo",
+            "responses" : {
+               "200" : {
+                  "content" : {
+                     "*/*" : {
+                        "schema" : {
+                           "$ref" : "#/components/schemas/ApiUser"
+                        }
+                     }
+                  },
+                  "description" : "Authenticated user ranking information"
+               },
+               "417" : {
+                  "content" : {
+                     "*/*" : {
+                        "schema" : {
+                           "$ref" : "#/components/schemas/FrontEndTranslatedError"
+                        }
+                     }
+                  },
+                  "description" : "Unlikelly (e.g. user was deleted after authentication layer and before service layer)"
+               }
+            },
+            "summary" : "Fetch current authenticated user information",
+            "tags" : [
+               "game-controller"
+            ]
+         }
+      },
+      "/v1/game/round/current" : {
+         "get" : {
+            "operationId" : "findCurrentRound",
+            "responses" : {
+               "200" : {
+                  "content" : {
+                     "*/*" : {
+                        "schema" : {
+                           "$ref" : "#/components/schemas/ApiRound"
+                        }
+                     }
+                  },
+                  "description" : "Finds the pair of movies for the active round of a match. Returns an empty object if user has no active match"
+               },
+               "417" : {
+                  "content" : {
+                     "*/*" : {
+                        "schema" : {
+                           "$ref" : "#/components/schemas/FrontEndTranslatedError"
+                        }
+                     }
+                  },
+                  "description" : "The movie associated with the current round was deleted"
+               }
+            },
+            "summary" : "Find current round that user is playing",
+            "tags" : [
+               "game-controller"
+            ]
+         }
+      },
+      "/v1/game/round/finish" : {
+         "post" : {
+            "operationId" : "finishRound",
+            "requestBody" : {
+               "content" : {
+                  "application/json" : {
+                     "schema" : {
+                        "$ref" : "#/components/schemas/FinishRoundRequest"
+                     }
+                  }
+               },
+               "required" : true
+            },
+            "responses" : {
+               "200" : {
+                  "content" : {
+                     "*/*" : {
+                        "schema" : {
+                           "$ref" : "#/components/schemas/FinishRoundResponse"
+                        }
+                     }
+                  },
+                  "description" : "Finishes current round with user selection. Returns either new round if rounds played < 10 or the match summary if request was for the last round"
+               },
+               "417" : {
+                  "content" : {
+                     "*/*" : {
+                        "schema" : {
+                           "$ref" : "#/components/schemas/FrontEndTranslatedError"
+                        }
+                     }
+                  },
+                  "description" : "If category is not supported or there are not enough movies in the database to satisfy a match of 10 rounds"
+               }
+            },
+            "summary" : "Retrieves the current match in play or create a new one if user has no active match associated",
+            "tags" : [
+               "game-controller"
+            ]
+         }
+      },
+      "/v1/game/start" : {
+         "post" : {
+            "operationId" : "startOrRetrieve",
+            "requestBody" : {
+               "content" : {
+                  "application/json" : {
+                     "schema" : {
+                        "$ref" : "#/components/schemas/GetOrStartGameRequest"
+                     }
+                  }
+               },
+               "required" : true
+            },
+            "responses" : {
+               "200" : {
+                  "content" : {
+                     "*/*" : {
+                        "schema" : {
+                           "$ref" : "#/components/schemas/GetOrStartGameResponse"
+                        }
+                     }
+                  },
+                  "description" : "Gets active match in play by the current user or creates a new one if the user has no active matches"
+               },
+               "417" : {
+                  "content" : {
+                     "*/*" : {
+                        "schema" : {
+                           "$ref" : "#/components/schemas/FrontEndTranslatedError"
+                        }
+                     }
+                  },
+                  "description" : "If category is not supported or there are not enough movies in the database to satisfy a match of 10 rounds"
+               }
+            },
+            "summary" : "Retrieves the current match in play or create a new one if user has no active match associated",
+            "tags" : [
+               "game-controller"
+            ]
+         }
+      },
+      "/v1/game/top" : {
+         "post" : {
+            "operationId" : "ranking",
+            "requestBody" : {
+               "content" : {
+                  "application/json" : {
+                     "schema" : {
+                        "$ref" : "#/components/schemas/TopPlayerRequest"
+                     }
+                  }
+               },
+               "required" : true
+            },
+            "responses" : {
+               "200" : {
+                  "content" : {
+                     "*/*" : {
+                        "schema" : {
+                           "$ref" : "#/components/schemas/TopPlayerResponse"
+                        }
+                     }
+                  },
+                  "description" : "Value updated successfully"
+               },
+               "417" : {
+                  "content" : {
+                     "*/*" : {
+                        "schema" : {
+                           "$ref" : "#/components/schemas/FrontEndTranslatedError"
+                        }
+                     }
+                  },
+                  "description" : "maxRounds < 1 || maxErrors < 1"
+               }
+            },
+            "summary" : "Fetches players ordered by ranking",
+            "tags" : [
+               "game-controller"
+            ]
+         }
+      }
+   },
+   "servers" : [
+      {
+         "description" : "Generated server url",
+         "url" : "http://localhost:8080"
+      }
+   ]
+}
